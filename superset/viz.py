@@ -800,7 +800,7 @@ class BubbleViz(NVD3Viz):
         for k, v in series.items():
             chart_data.append({
                 'key': k,
-                'values': v})
+                'values': v})   
         return chart_data
 
 class CatScatViz(BaseViz):
@@ -825,12 +825,13 @@ class CatScatViz(BaseViz):
         ]
         if form_data.get('series'):
             d['groupby'].append(form_data.get('series'))
+        if form_data.get('shape'):
+            d['groupby'].append(form_data.get('shape'))
         self.y_metric = form_data.get('y')
         self.z_metric = form_data.get('shape')
         self.entity = form_data.get('entity')
         self.series = form_data.get('series') or self.entity
         self.y_lines = as_floats('marker_lines')
-
 
         d['metrics'] = [
             self.y_metric,
@@ -838,6 +839,7 @@ class CatScatViz(BaseViz):
 
         if not all(d['metrics'] + [self.entity]):
             raise Exception(_("Pick a metric for y"))
+
         return d
 
     def get_data(self, df):

@@ -817,12 +817,10 @@ export const controls = {
     type: 'SelectControl',
     label: t('Bubble Shape'),
     default: null,
-    validators: [v.nonEmpty],
-    optionRenderer: m => <MetricOption metric={m} />,
-    valueRenderer: m => <MetricOption metric={m} />,
-    valueKey: 'metric_name',
+    description: t('Defines grouping of entiries.' +
+                   'Each group is shown as a specific shape on the chart.'),
     mapStateToProps: state => ({
-      options: (state.datasource) ? state.datasource.metrics : [],
+      choices: (state.datasource) ? state.datasource.gb_cols : [],
     }),
   },
 
