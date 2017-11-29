@@ -824,7 +824,7 @@ export const controls = {
     }),
   },
 
-  shape: {
+  shape_by: {
     type: 'SelectControl',
     label: t('Shape'),
     default: null,

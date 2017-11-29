@@ -604,7 +604,7 @@ export const visTypes = {
         label: t('Query'),
         expanded: true,
         controlSetRows: [
-          ['color_by', 'shape'],
+          ['color_by', 'shape_by'],
           ['entity'],
         ],
       },
