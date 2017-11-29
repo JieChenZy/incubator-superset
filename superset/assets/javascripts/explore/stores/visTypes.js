@@ -604,7 +604,8 @@ export const visTypes = {
         label: t('Query'),
         expanded: true,
         controlSetRows: [
-          ['series', 'entity'],
+          ['color_by', 'shape'],
+          ['entity'],
         ],
       },
       {
@@ -614,12 +615,6 @@ export const visTypes = {
           ['y_axis_label', 'bottom_margin'],
           ['y', 'y_axis_format'],
           ['y_log_scale', 'y_axis_showminmax'],
-        ],
-      },
-      {
-        label: t('Points'),
-        controlSetRows: [
-          ['shape'],
         ],
       },
       {

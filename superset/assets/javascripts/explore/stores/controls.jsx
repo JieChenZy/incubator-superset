@@ -813,11 +813,22 @@ export const controls = {
     }),
   },
 
+  color_by: {
+    type: 'SelectControl',
+    label: t('Color'),
+    default: null,
+    validators: [v.nonEmpty],
+    description: t('Each group is shown as a specific color on the chart.'),
+    mapStateToProps: state => ({
+      choices: (state.datasource) ? state.datasource.gb_cols : [],
+    }),
+  },
+
   shape: {
     type: 'SelectControl',
-    label: t('Bubble Shape'),
+    label: t('Shape'),
     default: null,
-    description: t('Defines grouping of entiries.' +
+    description: t('Optional. ' +
                    'Each group is shown as a specific shape on the chart.'),
     mapStateToProps: state => ({
       choices: (state.datasource) ? state.datasource.gb_cols : [],
