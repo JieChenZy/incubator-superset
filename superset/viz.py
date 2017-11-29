@@ -800,7 +800,7 @@ class BubbleViz(NVD3Viz):
         for k, v in series.items():
             chart_data.append({
                 'key': k,
-                'values': v})   
+                'values': v})
         return chart_data
 
 class CatScatViz(BaseViz):
@@ -823,33 +823,31 @@ class CatScatViz(BaseViz):
         d['groupby'] = [
             form_data.get('entity'),
         ]
-        if form_data.get('series'):
-            d['groupby'].append(form_data.get('series'))
-        if form_data.get('shape'):
-            d['groupby'].append(form_data.get('shape'))
-        self.y_metric = form_data.get('y')
-        self.z_metric = form_data.get('shape')
+        if form_data.get('color_by'):
+            d['groupby'].append(form_data.get('color_by'))
+        if form_data.get('shape_by'):
+            d['groupby'].append(form_data.get('shape_by'))
+        self.color_by = form_data.get('color_by')
+        self.shape_by = form_data.get('shape_by')
         self.entity = form_data.get('entity')
-        self.series = form_data.get('series') or self.entity
+        self.y_metric = form_data.get('y')
         self.y_lines = as_floats('marker_lines')
 
         d['metrics'] = [
             self.y_metric,
         ]
-
-        if not all(d['metrics'] + [self.entity]):
-            raise Exception(_("Pick a metric for y"))
-
         return d
 
     def get_data(self, df):
+        # to do: handle the case with shape or color is None
+        df['color'] = df[[self.color_by]] 
+        df['shape'] = df[[self.shape_by]]
+        df['entity'] = df[[self.entity]]
         df['y'] = df[[self.y_metric]]
-        df['shape'] = df[[self.z_metric]]
-        df['group'] = df[[self.series]]
 
         series = defaultdict(list)
         for row in df.to_dict(orient='records'):
-            series[row['group']].append(row)
+            series[row['entity']].append(row)
         chart_data = []
         for k, v in series.items():
             chart_data.append({
