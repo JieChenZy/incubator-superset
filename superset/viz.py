@@ -820,13 +820,13 @@ class CatScatViz(BaseViz):
 
         form_data = self.form_data
         d = super(CatScatViz, self).query_obj()
-        d['groupby'] = [
-            form_data.get('entity'),
-        ]
         if form_data.get('color_by'):
             d['groupby'].append(form_data.get('color_by'))
         if form_data.get('shape_by'):
             d['groupby'].append(form_data.get('shape_by'))
+        d['groupby'].append(form_data.get('entity'))
+
+
         self.color_by = form_data.get('color_by')
         self.shape_by = form_data.get('shape_by')
         self.entity = form_data.get('entity')
@@ -848,6 +848,7 @@ class CatScatViz(BaseViz):
         series = defaultdict(list)
         for row in df.to_dict(orient='records'):
             series[row['entity']].append(row)
+        print(series)
         chart_data = []
         for k, v in series.items():
             chart_data.append({
