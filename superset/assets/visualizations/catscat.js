@@ -15,7 +15,6 @@ import '../stylesheets/d3tip.css';
  */
 function computedProps(props) {
   const { fd, data, width, height } = props;
-
   const padding = {
     top: 20,
     left: 50,
@@ -25,7 +24,7 @@ function computedProps(props) {
 
   const plotWidth = width - (padding.right + padding.left);
   const plotHeight = height - (padding.top + padding.bottom);
-  
+
   // api: https://github.com/d3/d3-3.x-api-reference/blob/master/Quantitative-Scales.md#linear
   const yMin = d3.min(data, d => d3.min(d.values, v => v.y));
   const yMax = d3.max(data, d => d3.max(d.values, v => v.y));
@@ -38,6 +37,12 @@ function computedProps(props) {
   const xScale = d3.scale.ordinal()
     .domain(d3.range(data.length))
     .rangePoints([0, plotWidth]);
+
+  const colorValuesAll = data.map(d => d.values.map(v => v.color));
+  const colorValues = d3.set([].concat(...colorValuesAll)).values();
+  const colorScale = d3.scale.ordinal()
+    .domain(colorValues)
+    .range(getColorFromScheme);
 
   const shapeValuesAll = data.map(d => d.values.map(v => v.shape));
   const shapeValues = d3.set([].concat(...shapeValuesAll)).values();
@@ -54,6 +59,7 @@ function computedProps(props) {
     plotHeight,
     yScale,
     xScale,
+    colorScale,
     shapeScale,
     yFormat,
   };
@@ -63,16 +69,15 @@ function computedProps(props) {
  * Main Visualization method.
  * Takes the slice and json objects and
  * modifies DOM to create chart.
- * 
- * @param {Object} slice 
- * @param {Object} json 
+ *
+ * @param {Object} slice
+ * @param {Object} json
  */
 function scatCatViz(slice, json) {
   // this removes everything that might already
   // be in the vis's container.
   // There is probably a more elegant way to do this.
   slice.container.html('');
-
   // D3 selector of our outer container
   // api: https://github.com/d3/d3-3.x-api-reference/blob/master/Selections.md#d3_select
   const div = d3.select(slice.selector);
@@ -81,7 +86,7 @@ function scatCatViz(slice, json) {
   const width = slice.width();
   const height = slice.height();
 
-  // Currently the data is nested so we can 
+  // Currently the data is nested so we can
   // easily access both the actual data as well
   // as the yLines array. This could be simplified,
   // or renamed.
@@ -93,8 +98,7 @@ function scatCatViz(slice, json) {
   const yLines = json.data.yLines;
 
   // call to computedProps to setup our padding and scales
-  const { padding, plotHeight, plotWidth, yScale, xScale, shapeScale } = computedProps({ fd, data, width, height });
-
+  const { padding, plotHeight, plotWidth, yScale, xScale, colorScale, shapeScale } = computedProps({ fd, data, width, height });
   // append a new SVG element to our div container
   // api: https://github.com/d3/d3-3.x-api-reference/blob/master/Selections.md#append
   const svg = div.append('svg')
@@ -128,7 +132,9 @@ function scatCatViz(slice, json) {
   const renderTooltip = (d) => {
     return `
       <div>
-        <span>${d.group}: </span>
+        <span>${d.entity}: </span>
+        <span>${d.color}: </span>
+        <span>${d.shape}: </span>
         <strong>${d.y}</strong>
       </div>
     `;
@@ -153,6 +159,7 @@ function scatCatViz(slice, json) {
 
   // data binding and enter selection
   // for each .values array of our data
+
   band.selectAll('.point')
     .data(d => d.values)
     .enter()
@@ -160,13 +167,14 @@ function scatCatViz(slice, json) {
     .classed('point', true)
     .attr('d', d3.svg.symbol().type(d => shapeScale(d.shape)))
     .attr('transform', d => `translate(${0}, ${yScale(d.y)})`)
+    //.style('fill', getColorFromScheme(d => colorScale(d.color), fd.scheme))
+    .style('fill', d => getColorFromScheme(d.color, fd.scheme))
     .on('mouseover', function (d) {
       tip.show(d);
     })
     .on('mouseout', function (d) {
       tip.hide(d);
     });
-
   // d3 symbols: https://github.com/d3/d3-3.x-api-reference/blob/master/SVG-Shapes.md#symbol
 
   // add lines if present
