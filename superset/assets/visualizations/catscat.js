@@ -38,6 +38,8 @@ function computedProps(props) {
     .domain(d3.range(data.length))
     .rangePoints([0, plotWidth]);
 
+  // Currently colorScale is unused for plot, since superset already has getColorFromScheme. 
+  // Might be useful for creating legend.
   const colorValuesAll = data.map(d => d.values.map(v => v.color));
   const colorValues = d3.set([].concat(...colorValuesAll)).values();
   const colorScale = d3.scale.ordinal()
@@ -167,7 +169,6 @@ function scatCatViz(slice, json) {
     .classed('point', true)
     .attr('d', d3.svg.symbol().type(d => shapeScale(d.shape)))
     .attr('transform', d => `translate(${0}, ${yScale(d.y)})`)
-    //.style('fill', getColorFromScheme(d => colorScale(d.color), fd.scheme))
     .style('fill', d => getColorFromScheme(d.color, fd.scheme))
     .on('mouseover', function (d) {
       tip.show(d);
