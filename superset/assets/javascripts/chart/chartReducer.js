@@ -12,6 +12,7 @@ export const chartPropType = {
   chartUpdateEndTime: PropTypes.number,
   chartUpdateStartTime: PropTypes.number,
   latestQueryFormData: PropTypes.object,
+  queryRequest: PropTypes.object,
   queryResponse: PropTypes.object,
   triggerQuery: PropTypes.bool,
   lastRendered: PropTypes.number,
@@ -20,10 +21,11 @@ export const chartPropType = {
 export const chart = {
   chartKey: '',
   chartAlert: null,
-  chartStatus: null,
+  chartStatus: 'loading',
   chartUpdateEndTime: null,
   chartUpdateStartTime: now(),
   latestQueryFormData: null,
+  queryRequest: null,
   queryResponse: null,
   triggerQuery: true,
   lastRendered: 0,
@@ -41,6 +43,7 @@ export default function chartReducer(charts = {}, action) {
     [actions.CHART_UPDATE_STARTED](state) {
       return { ...state,
         chartStatus: 'loading',
+        chartAlert: null,
         chartUpdateEndTime: null,
         chartUpdateStartTime: now(),
         queryRequest: action.queryRequest,
@@ -62,7 +65,7 @@ export default function chartReducer(charts = {}, action) {
       return { ...state,
         chartStatus: 'failed',
         chartAlert: (
-        "<strong>{t('Query timeout')}</strong> - " +
+        `<strong>${t('Query timeout')}</strong> - ` +
         t(`visualization queries are set to timeout at ${action.timeout} seconds. `) +
         t('Perhaps your data has grown, your database is under unusual load, ' +
           'or you are simply querying a data source that is too large ' +

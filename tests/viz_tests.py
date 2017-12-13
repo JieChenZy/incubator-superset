@@ -22,7 +22,7 @@ class BaseVizTestCase(unittest.TestCase):
             'token': '12345',
         }
         datasource = {'type': 'table'}
-        test_viz = viz.BaseViz(datasource, form_data);
+        test_viz = viz.BaseViz(datasource, form_data)
         self.assertEqual(
             test_viz.default_fillna,
             test_viz.get_fillna_for_columns(),
@@ -545,7 +545,8 @@ class PartitionVizTestCase(unittest.TestCase):
         self.assertEqual(3, len(nest[0]['children']))
         self.assertEqual(3, len(nest[0]['children'][0]['children']))
         self.assertEqual(1, len(nest[0]['children'][0]['children'][0]['children']))
-        self.assertEqual(1,
+        self.assertEqual(
+            1,
             len(nest[0]['children']
                 [0]['children']
                 [0]['children']

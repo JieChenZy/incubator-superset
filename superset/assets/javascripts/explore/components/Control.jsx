@@ -13,6 +13,7 @@ const propTypes = {
   label: PropTypes.string.isRequired,
   choices: PropTypes.arrayOf(PropTypes.array),
   description: PropTypes.string,
+  tooltipOnClick: PropTypes.func,
   places: PropTypes.number,
   validators: PropTypes.array,
   validationErrors: PropTypes.array,
@@ -21,6 +22,7 @@ const propTypes = {
   value: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.number,
+    PropTypes.object,
     PropTypes.bool,
     PropTypes.array,
     PropTypes.func]),

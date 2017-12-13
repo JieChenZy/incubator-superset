@@ -47,8 +47,10 @@ class BaseDatasource(AuditMixinNullable, ImportMixin):
         return relationship(
             'Slice',
             primaryjoin=lambda: and_(
-              foreign(Slice.datasource_id) == self.id,
-              foreign(Slice.datasource_type) == self.type))
+                foreign(Slice.datasource_id) == self.id,
+                foreign(Slice.datasource_type) == self.type,
+            ),
+        )
 
     # placeholder for a relationship to a derivative of BaseColumn
     columns = []
@@ -58,7 +60,7 @@ class BaseDatasource(AuditMixinNullable, ImportMixin):
     @property
     def uid(self):
         """Unique id across datasource types"""
-        return "{self.id}__{self.type}".format(**locals())
+        return '{self.id}__{self.type}'.format(**locals())
 
     @property
     def column_names(self):
@@ -70,7 +72,7 @@ class BaseDatasource(AuditMixinNullable, ImportMixin):
 
     @property
     def main_dttm_col(self):
-        return "timestamp"
+        return 'timestamp'
 
     @property
     def connection(self):
@@ -103,7 +105,7 @@ class BaseDatasource(AuditMixinNullable, ImportMixin):
         if self.default_endpoint:
             return self.default_endpoint
         else:
-            return "/superset/explore/{obj.type}/{obj.id}/".format(obj=self)
+            return '/superset/explore/{obj.type}/{obj.id}/'.format(obj=self)
 
     @property
     def column_formats(self):
@@ -143,10 +145,11 @@ class BaseDatasource(AuditMixinNullable, ImportMixin):
             order_by_choices.append((json.dumps([s, True]), s + ' [asc]'))
             order_by_choices.append((json.dumps([s, False]), s + ' [desc]'))
 
-        verbose_map = {
+        verbose_map = {'__timestamp': 'Time'}
+        verbose_map.update({
             o.metric_name: o.verbose_name or o.metric_name
             for o in self.metrics
-        }
+        })
         verbose_map.update({
             o.column_name: o.verbose_name or o.column_name
             for o in self.columns
@@ -219,7 +222,7 @@ class BaseColumn(AuditMixinNullable, ImportMixin):
 
     num_types = (
         'DOUBLE', 'FLOAT', 'INT', 'BIGINT',
-        'LONG', 'REAL', 'NUMERIC', 'DECIMAL',
+        'LONG', 'REAL', 'NUMERIC', 'DECIMAL', 'MONEY',
     )
     date_types = ('DATE', 'TIME', 'DATETIME')
     str_types = ('VARCHAR', 'STRING', 'CHAR')

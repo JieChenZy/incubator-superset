@@ -28,6 +28,7 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import relationship, subqueryload
 from sqlalchemy.orm.session import make_transient
 from sqlalchemy.pool import NullPool
+from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.sql import text
 from sqlalchemy.sql.expression import TextAsFrom
 from sqlalchemy_utils import EncryptedType
@@ -43,7 +44,7 @@ config = app.config
 stats_logger = config.get('STATS_LOGGER')
 metadata = Model.metadata  # pylint: disable=no-member
 
-PASSWORD_MASK = "X" * 10
+PASSWORD_MASK = 'X' * 10
 
 def set_related_perm(mapper, connection, target):  # noqa
     src_class = target.cls_model
@@ -209,19 +210,19 @@ class Slice(Model, AuditMixinNullable, ImportMixin):
     def slice_url(self):
         """Defines the url to access the slice"""
         return (
-            "/superset/explore/{obj.datasource_type}/"
-            "{obj.datasource_id}/?form_data={params}".format(
+            '/superset/explore/{obj.datasource_type}/'
+            '{obj.datasource_id}/?form_data={params}'.format(
                 obj=self, params=parse.quote(json.dumps(self.form_data))))
 
     @property
     def slice_id_url(self):
         return (
-            "/superset/{slc.datasource_type}/{slc.datasource_id}/{slc.id}/"
+            '/superset/{slc.datasource_type}/{slc.datasource_id}/{slc.id}/'
         ).format(slc=self)
 
     @property
     def edit_url(self):
-        return "/slicemodelview/edit/{}".format(self.id)
+        return '/slicemodelview/edit/{}'.format(self.id)
 
     @property
     def slice_link(self):
@@ -229,21 +230,18 @@ class Slice(Model, AuditMixinNullable, ImportMixin):
         name = escape(self.slice_name)
         return Markup('<a href="{url}">{name}</a>'.format(**locals()))
 
-    def get_viz(self, url_params_multidict=None):
+    def get_viz(self):
         """Creates :py:class:viz.BaseViz object from the url_params_multidict.
 
-        :param werkzeug.datastructures.MultiDict url_params_multidict:
-            Contains the visualization params, they override the self.params
-            stored in the database
         :return: object of the 'viz_type' type that is taken from the
             url_params_multidict or self.params.
         :rtype: :py:class:viz.BaseViz
         """
         slice_params = json.loads(self.params)
         slice_params['slice_id'] = self.id
-        slice_params['json'] = "false"
+        slice_params['json'] = 'false'
         slice_params['slice_name'] = self.slice_name
-        slice_params['viz_type'] = self.viz_type if self.viz_type else "table"
+        slice_params['viz_type'] = self.viz_type if self.viz_type else 'table'
 
         return viz_types[slice_params.get('viz_type')](
             self.datasource,
@@ -251,25 +249,23 @@ class Slice(Model, AuditMixinNullable, ImportMixin):
         )
 
     @classmethod
-    def import_obj(cls, slc_to_import, import_time=None):
+    def import_obj(cls, slc_to_import, slc_to_override, import_time=None):
         """Inserts or overrides slc in the database.
 
         remote_id and import_time fields in params_dict are set to track the
         slice origin and ensure correct overrides for multiple imports.
         Slice.perm is used to find the datasources and connect them.
+
+        :param Slice slc_to_import: Slice object to import
+        :param Slice slc_to_override: Slice to replace, id matches remote_id
+        :returns: The resulting id for the imported slice
+        :rtype: int
         """
         session = db.session
         make_transient(slc_to_import)
         slc_to_import.dashboards = []
         slc_to_import.alter_params(
             remote_id=slc_to_import.id, import_time=import_time)
-
-        # find if the slice was already imported
-        slc_to_override = None
-        for slc in session.query(Slice).all():
-            if ('remote_id' in slc.params_dict and
-                    slc.params_dict['remote_id'] == slc_to_import.id):
-                slc_to_override = slc
 
         slc_to_import = slc_to_import.copy()
         params = slc_to_import.params_dict
@@ -330,8 +326,8 @@ class Dashboard(Model, AuditMixinNullable, ImportMixin):
     @property
     def table_names(self):
         # pylint: disable=no-member
-        return ", ".join(
-            {"{}".format(s.datasource.full_name) for s in self.slices})
+        return ', '.join(
+            {'{}'.format(s.datasource.full_name) for s in self.slices})
 
     @property
     def url(self):
@@ -341,9 +337,9 @@ class Dashboard(Model, AuditMixinNullable, ImportMixin):
             default_filters = json_metadata.get('default_filters')
             if default_filters:
                 filters = parse.quote(default_filters.encode('utf8'))
-                return "/superset/dashboard/{}/?preselect_filters={}".format(
+                return '/superset/dashboard/{}/?preselect_filters={}'.format(
                     self.slug or self.id, filters)
-        return "/superset/dashboard/{}/".format(self.slug or self.id)
+        return '/superset/dashboard/{}/'.format(self.slug or self.id)
 
     @property
     def datasources(self):
@@ -435,10 +431,16 @@ class Dashboard(Model, AuditMixinNullable, ImportMixin):
         new_timed_refresh_immune_slices = []
         new_expanded_slices = {}
         i_params_dict = dashboard_to_import.params_dict
+        remote_id_slice_map = {
+            slc.params_dict['remote_id']: slc
+            for slc in session.query(Slice).all()
+            if 'remote_id' in slc.params_dict
+        }
         for slc in slices:
             logging.info('Importing slice {} from the dashboard: {}'.format(
                 slc.to_json(), dashboard_to_import.dashboard_title))
-            new_slc_id = Slice.import_obj(slc, import_time=import_time)
+            remote_slc = remote_id_slice_map.get(slc.id)
+            new_slc_id = Slice.import_obj(slc, remote_slc, import_time=import_time)
             old_to_new_slc_id_dict[slc.id] = new_slc_id
             # update json metadata that deals with slice ids
             new_slc_id_str = '{}'.format(new_slc_id)
@@ -536,12 +538,13 @@ class Dashboard(Model, AuditMixinNullable, ImportMixin):
         })
 
 
-class Database(Model, AuditMixinNullable):
+class Database(Model, AuditMixinNullable, ImportMixin):
 
     """An ORM object that stores Database related information"""
 
     __tablename__ = 'dbs'
-    type = "table"
+    type = 'table'
+    __table_args__ = (UniqueConstraint('database_name'),)
 
     id = Column(Integer, primary_key=True)
     verbose_name = Column(String(250), unique=True)
@@ -566,6 +569,10 @@ class Database(Model, AuditMixinNullable):
     perm = Column(String(1000))
     custom_password_store = config.get('SQLALCHEMY_CUSTOM_PASSWORD_STORE')
     impersonate_user = Column(Boolean, default=False)
+    export_fields = ('database_name', 'sqlalchemy_uri', 'cache_timeout',
+                     'expose_in_sqllab', 'allow_run_sync', 'allow_run_async',
+                     'allow_ctas', 'extra')
+    export_children = ['tables']
 
     def __repr__(self):
         return self.verbose_name if self.verbose_name else self.database_name
@@ -615,7 +622,10 @@ class Database(Model, AuditMixinNullable):
             effective_username = url.username
             if user_name:
                 effective_username = user_name
-            elif hasattr(g, 'user') and hasattr(g.user, 'username') and g.user.username is not None:
+            elif (
+                hasattr(g, 'user') and hasattr(g.user, 'username') and
+                g.user.username is not None
+            ):
                 effective_username = g.user.username
         return effective_username
 
@@ -625,11 +635,15 @@ class Database(Model, AuditMixinNullable):
         url = self.db_engine_spec.adjust_database_uri(url, schema)
         effective_username = self.get_effective_user(url, user_name)
         # If using MySQL or Presto for example, will set url.username
-        # If using Hive, will not do anything yet since that relies on a configuration parameter instead.
-        self.db_engine_spec.modify_url_for_impersonation(url, self.impersonate_user, effective_username)
+        # If using Hive, will not do anything yet since that relies on a
+        # configuration parameter instead.
+        self.db_engine_spec.modify_url_for_impersonation(
+            url,
+            self.impersonate_user,
+            effective_username)
 
         masked_url = self.get_password_masked_url(url)
-        logging.info("Database.get_sqla_engine(). Masked URL: {0}".format(masked_url))
+        logging.info('Database.get_sqla_engine(). Masked URL: {0}'.format(masked_url))
 
         params = extra.get('engine_params', {})
         if nullpool:
@@ -638,11 +652,12 @@ class Database(Model, AuditMixinNullable):
         # If using Hive, this will set hive.server2.proxy.user=$effective_username
         configuration = {}
         configuration.update(
-            self.db_engine_spec.get_configuration_for_impersonation(str(url),
-                                                                    self.impersonate_user,
-                                                                    effective_username))
+            self.db_engine_spec.get_configuration_for_impersonation(
+                str(url),
+                self.impersonate_user,
+                effective_username))
         if configuration:
-            params["connect_args"] = {"configuration": configuration}
+            params['connect_args'] = {'configuration': configuration}
 
         return create_engine(url, **params)
 
@@ -671,7 +686,7 @@ class Database(Model, AuditMixinNullable):
 
     def compile_sqla_query(self, qry, schema=None):
         eng = self.get_sqla_engine(schema=schema)
-        compiled = qry.compile(eng, compile_kwargs={"literal_binds": True})
+        compiled = qry.compile(eng, compile_kwargs={'literal_binds': True})
         return '{}'.format(compiled)
 
     def select_star(
@@ -704,7 +719,7 @@ class Database(Model, AuditMixinNullable):
         if not schema:
             tables_dict = self.db_engine_spec.fetch_result_sets(
                 self, 'table', force=force)
-            return tables_dict.get("", [])
+            return tables_dict.get('', [])
         return sorted(
             self.db_engine_spec.get_table_names(schema, self.inspector))
 
@@ -712,7 +727,7 @@ class Database(Model, AuditMixinNullable):
         if not schema:
             views_dict = self.db_engine_spec.fetch_result_sets(
                 self, 'view', force=force)
-            return views_dict.get("", [])
+            return views_dict.get('', [])
         views = []
         try:
             views = self.inspector.get_view_names(schema)
@@ -721,7 +736,7 @@ class Database(Model, AuditMixinNullable):
         return views
 
     def all_schema_names(self):
-        return sorted(self.inspector.get_schema_names())
+        return sorted(self.db_engine_spec.get_schema_names(self.inspector))
 
     @property
     def db_engine_spec(self):
@@ -791,7 +806,7 @@ class Database(Model, AuditMixinNullable):
 
     def get_perm(self):
         return (
-            "[{obj.database_name}].(id:{obj.id})").format(obj=self)
+            '[{obj.database_name}].(id:{obj.id})').format(obj=self)
 
     def has_table(self, table):
         engine = self.get_sqla_engine()
@@ -846,10 +861,10 @@ class Log(Model):
             except (ValueError, TypeError):
                 slice_id = 0
 
-            params = ""
+            params = ''
             try:
                 params = json.dumps(d)
-            except:
+            except Exception:
                 pass
             stats_logger.incr(f.__name__)
             value = f(*args, **kwargs)
@@ -943,6 +958,6 @@ class DatasourceAccessRequest(Model, AuditMixinNullable):
             )
             href = '<a href="{}">Extend {} Role</a>'.format(url, r.name)
             if r.name in self.ROLES_BLACKLIST:
-                href = "{} Role".format(r.name)
+                href = '{} Role'.format(r.name)
             action_list = action_list + '<li>' + href + '</li>'
         return '<ul>' + action_list + '</ul>'
