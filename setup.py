@@ -15,18 +15,19 @@ def get_git_sha():
     try:
         s = str(subprocess.check_output(['git', 'rev-parse', 'HEAD']))
         return s.strip()
-    except:
-        return ""
+    except Exception:
+        return ''
+
 
 GIT_SHA = get_git_sha()
 version_info = {
     'GIT_SHA': GIT_SHA,
     'version': version_string,
 }
-print("-==-" * 15)
-print("VERSION: " + version_string)
-print("GIT SHA: " + GIT_SHA)
-print("-==-" * 15)
+print('-==-' * 15)
+print('VERSION: ' + version_string)
+print('GIT SHA: ' + GIT_SHA)
+print('-==-' * 15)
 
 with open(os.path.join(PACKAGE_DIR, 'version_info.json'), 'w') as version_file:
     json.dump(version_info, version_file)
@@ -35,16 +36,16 @@ with open(os.path.join(PACKAGE_DIR, 'version_info.json'), 'w') as version_file:
 setup(
     name='superset',
     description=(
-        "A interactive data visualization platform build on SqlAlchemy "
-        "and druid.io"),
+        'A interactive data visualization platform build on SqlAlchemy '
+        'and druid.io'),
     version=version_string,
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
     scripts=['superset/bin/superset'],
     install_requires=[
-        'boto3==1.4.4',
-        'celery==3.1.25',
+        'boto3>=1.4.6',
+        'celery==4.1.0',
         'colorama==0.3.9',
         'cryptography==1.9',
         'flask==0.12.2',
@@ -63,9 +64,11 @@ setup(
         'markdown==2.6.8',
         'pandas==0.20.3',
         'parsedatetime==2.0.0',
+        'pathlib2==2.3.0',
         'pydruid==0.3.1',
         'PyHive>=0.4.0',
         'python-dateutil==2.6.0',
+        'pyyaml>=3.11',
         'requests==2.17.3',
         'simplejson==3.10.0',
         'six==1.10.0',
@@ -74,6 +77,7 @@ setup(
         'sqlparse==0.2.3',
         'thrift>=0.9.3',
         'thrift-sasl>=0.2.1',
+        'unidecode>=0.04.21',
     ],
     extras_require={
         'cors': ['Flask-Cors>=2.0.0'],

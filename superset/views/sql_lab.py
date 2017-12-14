@@ -20,13 +20,14 @@ class QueryView(SupersetModelView):
         'end_time': _('End Time'),
     }
 
+
 appbuilder.add_view(
     QueryView,
-    "Queries",
-    label=__("Queries"),
-    category="Manage",
-    category_label=__("Manage"),
-    icon="fa-search")
+    'Queries',
+    label=__('Queries'),
+    category='Manage',
+    category_label=__('Manage'),
+    icon='fa-search')
 
 
 class SavedQueryView(SupersetModelView, DeleteMixin):
@@ -70,19 +71,20 @@ class SavedQueryViewApi(SavedQueryView):
     add_columns = show_columns
     edit_columns = add_columns
 
+
 appbuilder.add_view_no_menu(SavedQueryViewApi)
 appbuilder.add_view_no_menu(SavedQueryView)
 
 appbuilder.add_link(
     __('Saved Queries'),
     href='/sqllab/my_queries/',
-    icon="fa-save",
+    icon='fa-save',
     category='SQL Lab')
 
 
 class SqlLab(BaseSupersetView):
     """The base views for Superset!"""
-    @expose("/my_queries/")
+    @expose('/my_queries/')
     def my_queries(self):
         """Assigns a list of found users to the given role."""
         return redirect(

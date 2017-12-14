@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { chartPropType } from '../../chart/chartReducer';
 import ExploreActionButtons from './ExploreActionButtons';
 import EditableTitle from '../../components/EditableTitle';
+import AlteredSliceTag from '../../components/AlteredSliceTag';
 import FaveStar from '../../components/FaveStar';
 import TooltipWrapper from '../../components/TooltipWrapper';
 import Timer from '../../components/Timer';
@@ -105,7 +106,12 @@ class ExploreChartHeader extends React.PureComponent {
           </TooltipWrapper>
         </span>
         }
-
+        {this.props.chart.sliceFormData &&
+          <AlteredSliceTag
+            origFormData={this.props.chart.sliceFormData}
+            currentFormData={this.props.form_data}
+          />
+        }
         <div className="pull-right">
           {this.props.chart.chartStatus === 'success' &&
           queryResponse &&

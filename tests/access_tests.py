@@ -299,7 +299,6 @@ class RequestAccessTests(SupersetTestCase):
         ds = session.query(SqlaTable).filter_by(
             table_name='wb_health_population').first()
 
-
         ds.schema = 'temp_schema'
         security.merge_perm(
             sm, 'schema_access', ds.schema_perm)
@@ -447,7 +446,7 @@ class RequestAccessTests(SupersetTestCase):
         # request access to the table
         resp = self.get_resp(
             ACCESS_REQUEST.format('table', table_1_id, 'go'))
-        assert "Access was requested" in resp
+        assert 'Access was requested' in resp
         access_request1 = self.get_access_requests('gamma', 'table', table_1_id)
         assert access_request1 is not None
 
@@ -464,7 +463,7 @@ class RequestAccessTests(SupersetTestCase):
             alpha_role,
             sm.find_permission_view_menu('datasource_access', table3_perm))
         sm.add_permission_role(
-            sm.find_role("energy_usage_role"),
+            sm.find_role('energy_usage_role'),
             sm.find_permission_view_menu('datasource_access', table3_perm))
         session.commit()
 
@@ -520,79 +519,6 @@ class RequestAccessTests(SupersetTestCase):
         gamma_user = sm.find_user(username='gamma')
         gamma_user.roles.remove(sm.find_role('dummy_role'))
         session.commit()
-
-    def test_update_role_do_not_exist(self):
-        update_role_str = 'update_me'
-        update_role = sm.find_role(update_role_str)
-        if update_role:
-            db.session.delete(update_role)
-        db.session.commit()
-        data = json.dumps({
-            'users': [{
-                'username': 'gamma',
-                'first_name': 'Gamma',
-                'last_name': 'Gamma',
-                'email': 'gamma@superset.com',
-            }],
-            'role_name': update_role_str})
-        r = self.client.post('/superset/update_role/', data=data,
-                             follow_redirects=True)
-        self.assertEquals(500, r.status_code)
-
-    def test_update_role(self):
-        update_role_str = 'update_me'
-        sm.add_role(update_role_str)
-        db.session.commit()
-        resp = self.client.post(
-            '/superset/update_role/',
-            data=json.dumps({
-                'users': [{
-                        'username': 'gamma',
-                        'first_name': 'Gamma',
-                        'last_name': 'Gamma',
-                        'email': 'gamma@superset.com',
-                    }],
-                'role_name': update_role_str,
-            }),
-            follow_redirects=True,
-        )
-        update_role = sm.find_role(update_role_str)
-        self.assertEquals(
-            update_role.user, [sm.find_user(username='gamma')])
-        self.assertEquals(resp.status_code, 201)
-
-        resp = self.client.post(
-            '/superset/update_role/',
-            data=json.dumps({
-                'users': [{
-                    'username': 'alpha',
-                    'first_name': 'Alpha',
-                    'last_name': 'Alpha',
-                    'email': 'alpha@superset.com',
-                }, {
-                    'username': 'unknown',
-                    'first_name': 'Unknown1',
-                    'last_name': 'Unknown2',
-                    'email': 'unknown@superset.com',
-                }],
-                'role_name': update_role_str,
-            }),
-            follow_redirects=True,
-        )
-        self.assertEquals(resp.status_code, 201)
-        update_role = sm.find_role(update_role_str)
-        self.assertEquals(
-            update_role.user, [
-                sm.find_user(username='alpha'),
-                sm.find_user(username='unknown'),
-            ])
-        unknown = sm.find_user(username='unknown')
-        self.assertEquals('Unknown2', unknown.last_name)
-        self.assertEquals('Unknown1', unknown.first_name)
-        self.assertEquals('unknown@superset.com', unknown.email)
-        db.session.delete(update_role)
-        db.session.delete(unknown)
-        db.session.commit()
 
 
 if __name__ == '__main__':

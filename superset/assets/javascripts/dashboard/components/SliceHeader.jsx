@@ -11,11 +11,14 @@ const propTypes = {
   exploreChartUrl: PropTypes.string,
   exportCSVUrl: PropTypes.string,
   isExpanded: PropTypes.bool,
+  isCached: PropTypes.bool,
+  cachedDttm: PropTypes.string,
   formDataExtra: PropTypes.object,
   removeSlice: PropTypes.func,
   updateSliceName: PropTypes.func,
   toggleExpandSlice: PropTypes.func,
   forceRefresh: PropTypes.func,
+  editMode: PropTypes.bool,
 };
 
 const defaultProps = {
@@ -23,6 +26,7 @@ const defaultProps = {
   removeSlice: () => ({}),
   updateSliceName: () => ({}),
   toggleExpandSlice: () => ({}),
+  editMode: false,
 };
 
 class SliceHeader extends React.PureComponent {
@@ -40,9 +44,9 @@ class SliceHeader extends React.PureComponent {
 
   render() {
     const slice = this.props.slice;
-    const isCached = slice.is_cached;
+    const isCached = this.props.isCached;
     const isExpanded = !!this.props.isExpanded;
-    const cachedWhen = moment.utc(slice.cached_dttm).fromNow();
+    const cachedWhen = moment.utc(this.props.cachedDttm).fromNow();
     const refreshTooltip = isCached ?
       t('Served from data cached %s . Click to force refresh.', cachedWhen) :
       t('Force refresh data');
@@ -53,22 +57,24 @@ class SliceHeader extends React.PureComponent {
           <div className="header">
             <EditableTitle
               title={slice.slice_name}
-              canEdit={!!this.props.updateSliceName}
+              canEdit={!!this.props.updateSliceName && this.props.editMode}
               onSaveTitle={this.onSaveTitle}
               noPermitTooltip={'You don\'t have the rights to alter this dashboard.'}
             />
           </div>
           <div className="chart-controls">
             <div id={'controls_' + slice.slice_id} className="pull-right">
-              <a>
-                <TooltipWrapper
-                  placement="top"
-                  label="move"
-                  tooltip={t('Move chart')}
-                >
-                  <i className="fa fa-arrows drag" />
-                </TooltipWrapper>
-              </a>
+              {this.props.editMode &&
+                <a>
+                  <TooltipWrapper
+                    placement="top"
+                    label="move"
+                    tooltip={t('Move chart')}
+                  >
+                    <i className="fa fa-arrows drag" />
+                  </TooltipWrapper>
+                </a>
+              }
               <a
                 className={`refresh ${isCached ? 'danger' : ''}`}
                 onClick={() => (this.props.forceRefresh(slice.slice_id))}
@@ -119,15 +125,17 @@ class SliceHeader extends React.PureComponent {
                   <i className="fa fa-share" />
                 </TooltipWrapper>
               </a>
-              <a className="remove-chart" onClick={() => (this.props.removeSlice(slice))}>
-                <TooltipWrapper
-                  placement="top"
-                  label="close"
-                  tooltip={t('Remove chart from dashboard')}
-                >
-                  <i className="fa fa-close" />
-                </TooltipWrapper>
-              </a>
+              {this.props.editMode &&
+                <a className="remove-chart" onClick={() => (this.props.removeSlice(slice))}>
+                  <TooltipWrapper
+                    placement="top"
+                    label="close"
+                    tooltip={t('Remove chart from dashboard')}
+                  >
+                    <i className="fa fa-close" />
+                  </TooltipWrapper>
+                </a>
+              }
             </div>
           </div>
         </div>

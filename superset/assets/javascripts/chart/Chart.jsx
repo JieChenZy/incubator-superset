@@ -62,7 +62,12 @@ class Chart extends React.PureComponent {
   }
 
   componentDidMount() {
-    this.runQuery();
+    if (this.props.triggerQuery) {
+      this.props.actions.runQuery(this.props.formData, false,
+        this.props.timeout,
+        this.props.chartKey,
+      );
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -123,13 +128,6 @@ class Chart extends React.PureComponent {
     return d3format(format, number);
   }
 
-  runQuery() {
-    this.props.actions.runQuery(this.props.formData, true,
-      this.props.timeout,
-      this.props.chartKey,
-    );
-  }
-
   render_template(s) {
     const context = {
       width: this.width(),
@@ -141,7 +139,7 @@ class Chart extends React.PureComponent {
   renderViz() {
     const viz = visMap[this.props.vizType];
     try {
-      viz(this, this.props.queryResponse, this.props.actions.setControlValue);
+      viz(this, this.props.queryResponse, this.props.setControlValue);
     } catch (e) {
       this.props.actions.chartRenderingFailed(e, this.props.chartKey);
     }

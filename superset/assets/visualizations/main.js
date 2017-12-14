@@ -19,6 +19,7 @@ const vizMap = {
   horizon: require('./horizon.js'),
   iframe: require('./iframe.js'),
   line: require('./nvd3_vis.js'),
+  time_pivot: require('./nvd3_vis.js'),
   mapbox: require('./mapbox.jsx'),
   markup: require('./markup.js'),
   para: require('./parallel_coordinates.js'),
@@ -37,5 +38,9 @@ const vizMap = {
   event_flow: require('./EventFlow.jsx'),
   paired_ttest: require('./paired_ttest.jsx'),
   partition: require('./partition.js'),
+  deck_scatter: require('./deckgl/scatter.jsx'),
+  deck_screengrid: require('./deckgl/screengrid.jsx'),
+  deck_grid: require('./deckgl/grid.jsx'),
+  deck_hex: require('./deckgl/hex.jsx'),
 };
 export default vizMap;
