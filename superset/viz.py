@@ -849,7 +849,6 @@ class CatScatViz(BaseViz):
         series = defaultdict(list)
         for row in df.to_dict(orient='records'):
             series[row['entity']].append(row)
-        print(series)
         chart_data = []
         for k, v in series.items():
             chart_data.append({
