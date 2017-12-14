@@ -19,6 +19,17 @@ function pickFirst(array, attr, defaultValue = null) {
 }
 
 
+/**
+ * Sorts array of data.
+ * Data is expected to have following format:
+ * [{values:[{}]}, {values:[{}]}]
+ *
+ * The sortBy value will be selected from the
+ * first element in each of the data's "values" array
+ *
+ * @param {Array} data The data to sort
+ * @param {String} sortBy Attribute to sort by
+ */
 function sortData(data, sortBy) {
   data.sort((a, b) => +pickFirst(a.values, sortBy) - +pickFirst(b.values, sortBy));
   return data;
@@ -42,7 +53,9 @@ function computedProps(props) {
   };
 
   const plotWidth = width - (padding.right + padding.left);
-  const plotHeight = height - (padding.top + padding.bottom);
+  const legendWidth = plotWidth;
+  const legendHeight = height * 0.10;
+  const plotHeight = height - (padding.top + padding.bottom + legendHeight);
 
   const sortedData = sortData(data, 'color');
 
@@ -53,18 +66,20 @@ function computedProps(props) {
     .domain([yMin, yMax])
     .range([plotHeight, 0]);
 
-  // as this is a categorical scatterplot, our x scale will be ordinal. 
+  // as this is a categorical scatterplot, our x scale will be ordinal.
   // api: https://github.com/d3/d3-3.x-api-reference/blob/master/Ordinal-Scales.md#ordinal_rangePoints
   const xScale = d3.scale.ordinal()
     .domain(d3.range(sortedData.length))
     .rangePoints([0, plotWidth]);
 
-  // color scale
+  // color values are used in creating the legend.
+  // we don't need to create the color scale here,
+  // as the code is currently written.
   const colorValuesAll = data.map(d => d.values.map(v => v.color));
   const colorValues = d3.set([].concat(...colorValuesAll)).values();
-  const colorScale = d3.scale.ordinal()
-    .domain(colorValues)
-    .range(getColorFromScheme);
+  // const colorScale = d3.scale.ordinal()
+  //   .domain(colorValues)
+  //   .range(getColorFromScheme);
 
   const shapeValuesAll = data.map(d => d.values.map(v => v.shape));
   const shapeValues = d3.set([].concat(...shapeValuesAll)).values();
@@ -75,6 +90,7 @@ function computedProps(props) {
   // Currently unused, but we should use it in the yAxis creation below
   const yFormat = d3.format(fd.y_axis_format);
 
+  // In the future, this could be toggled via a control option.
   const displayXAxis = false;
 
   return {
@@ -84,10 +100,13 @@ function computedProps(props) {
     plotHeight,
     yScale,
     xScale,
-    colorScale,
     shapeScale,
+    shapeValues,
+    colorValues,
     yFormat,
     displayXAxis,
+    legendWidth,
+    legendHeight,
   };
 }
 
@@ -105,6 +124,7 @@ function scatCatViz(slice, json) {
   // be in the vis's container.
   // There is probably a more elegant way to do this.
   slice.container.html('');
+
   // D3 selector of our outer container
   // api: https://github.com/d3/d3-3.x-api-reference/blob/master/Selections.md#d3_select
   const div = d3.select(slice.selector);
@@ -124,8 +144,28 @@ function scatCatViz(slice, json) {
 
   const yLines = json.data.yLines;
 
-  // call to computedProps to setup our padding and scales
-  const { padding, sortedData, plotHeight, plotWidth, yScale, xScale, displayXAxis, colorScale, shapeScale } = computedProps({ fd, data, width, height });
+  // call to computedProps to setup
+  // various values used in creating the vis
+  // TODO: would be interesting to have a
+  // helper method combine these 'props'
+  // with the original values of this function
+  // to make a single 'props' object.
+  // then the rest of the code would be a bit
+  // more react-y.
+  const {
+    padding,
+    sortedData,
+    plotHeight,
+    plotWidth,
+    yScale,
+    xScale,
+    displayXAxis,
+    shapeScale,
+    shapeValues,
+    colorValues,
+    legendWidth,
+  } = computedProps({ fd, data, width, height });
+
   // append a new SVG element to our div container
   // api: https://github.com/d3/d3-3.x-api-reference/blob/master/Selections.md#append
   const svg = div.append('svg')
@@ -222,6 +262,108 @@ function scatCatViz(slice, json) {
       .attr('y1', d => yScale(d))
       .attr('y2', d => yScale(d));
   }
+
+  // split the legend rendering in a separate function.
+  renderLegend(legend, { fd, shapeScale, shapeValues, colorValues, plotHeight, legendWidth });
 }
+
+/**
+ * Render legend into provided D3 selection.
+ *
+ * @param {Selection} legend D3 selection to render legend into
+ * @param {Object} props Properties used to render legend.
+ */
+function renderLegend(legend, props) {
+  const { fd, shapeScale, shapeValues, colorValues } = props;
+  const shapes = legend.selectAll('.shape')
+    .data(shapeValues);
+
+  const shapesEnter = shapes.enter()
+    .append('g')
+    .classed('key', true)
+    .classed('shape', true);
+
+  shapesEnter.append('path')
+    .classed('point key-symbol', true)
+    .attr('d', d3.svg.symbol().type(d => shapeScale(d)));
+
+  shapesEnter.append('text')
+    .classed('key-text', true)
+    .attr('x', 10)
+    .attr('y', 5)
+    .text(d => d);
+
+  const colors = legend.selectAll('.color')
+    .data(colorValues);
+
+  const colorsEnter = colors.enter()
+    .append('g')
+    .classed('key', true)
+    .classed('color', true);
+
+  colorsEnter.append('circle')
+    .classed('point key-symbol', true)
+    .attr('r', 5)
+    .attr('fill', d => getColorFromScheme(d, fd.scheme));
+
+  colorsEnter.append('text')
+    .classed('key-text', true)
+    .attr('x', 10)
+    .attr('y', 5)
+    .text(d => d);
+
+  fixUpLegend(legend, props);
+}
+
+/**
+ * Since we don't know the size of the labels beforehand
+ * this function will adjust the position of the legend .keys
+ * to not overlap and fit within the space provided.
+ *
+ * @param {Selection} legend Legend selection
+ * @param {Object} props Properties used.
+ */
+function fixUpLegend(legend, props) {
+  const { plotHeight, legendWidth } = props;
+
+  const bboxes = [];
+
+  legend
+    .attr('transform', `translate(${0}, ${plotHeight})`);
+
+  // getBBox is one way to get the width/height of an
+  // element in an SVG.
+  // https://developer.mozilla.org/en-US/docs/Web/API/SVGGraphicsElement
+  legend.selectAll('.key')
+    .each(function () {
+      bboxes.push(d3.select(this).node().getBBox());
+    });
+
+  const paddingY = 20;
+  const paddingX = 16;
+  let currentX = 0;
+  let currentY = paddingY;
+
+  const adjustments = [];
+
+  // there are fancier ways to do this,
+  // but here we check the next position
+  // and move down a row if it will be off
+  // screen.
+  bboxes.forEach((bbox) => {
+    if (currentX + bbox.width >= legendWidth) {
+      currentX = 0;
+      currentY += paddingY;
+    }
+    const nextPos = { x: currentX, y: currentY };
+    adjustments.push(nextPos);
+    currentX += (bbox.width + paddingX);
+  });
+
+  // adjust the actual SVG g elements.
+  legend.selectAll('.key')
+    .attr('transform', (d, i) => `translate(${adjustments[i].x},${adjustments[i].y})`);
+}
+
 
 module.exports = scatCatViz;
