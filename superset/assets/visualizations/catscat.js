@@ -282,6 +282,25 @@ function scatCatViz(slice, json) {
  */
 function renderLegend(legend, props) {
   const { fd, shapeScale, shapeValues, colorValues } = props;
+  const colors = legend.selectAll('.color')
+  .data(colorValues);
+
+  const colorsEnter = colors.enter()
+    .append('g')
+    .classed('key', true)
+    .classed('color', true);
+
+  colorsEnter.append('circle')
+    .classed('point key-symbol', true)
+    .attr('r', 5)
+    .attr('fill', d => getColorFromScheme(d, fd.scheme));
+
+  colorsEnter.append('text')
+    .classed('key-text', true)
+    .attr('x', 10)
+    .attr('y', 5)
+    .text(d => d);
+
   const shapes = legend.selectAll('.shape')
     .data(shapeValues);
 
@@ -295,25 +314,6 @@ function renderLegend(legend, props) {
     .attr('d', d3.svg.symbol().type(d => shapeScale(d)));
 
   shapesEnter.append('text')
-    .classed('key-text', true)
-    .attr('x', 10)
-    .attr('y', 5)
-    .text(d => d);
-
-  const colors = legend.selectAll('.color')
-    .data(colorValues);
-
-  const colorsEnter = colors.enter()
-    .append('g')
-    .classed('key', true)
-    .classed('color', true);
-
-  colorsEnter.append('circle')
-    .classed('point key-symbol', true)
-    .attr('r', 5)
-    .attr('fill', d => getColorFromScheme(d, fd.scheme));
-
-  colorsEnter.append('text')
     .classed('key-text', true)
     .attr('x', 10)
     .attr('y', 5)
