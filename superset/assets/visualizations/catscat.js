@@ -91,7 +91,10 @@ function computedProps(props) {
   const yFormat = d3.format(fd.y_axis_format);
 
   // In the future, this could be toggled via a control option.
-  const displayXAxis = false;
+  const displayXAxis = true;
+
+  // Calculate x-axis ticks
+  const xTicks = xScale.domain().filter(d => {return !(d % 10); });
 
   return {
     padding,
@@ -100,6 +103,7 @@ function computedProps(props) {
     plotHeight,
     yScale,
     xScale,
+    xTicks,
     shapeScale,
     shapeValues,
     colorValues,
@@ -159,6 +163,7 @@ function scatCatViz(slice, json) {
     plotWidth,
     yScale,
     xScale,
+    xTicks,
     displayXAxis,
     shapeScale,
     shapeValues,
@@ -196,7 +201,7 @@ function scatCatViz(slice, json) {
 
   if (displayXAxis) {
     xAxis
-      .call(d3.svg.axis().scale(xScale).orient('bottom'));
+      .call(d3.svg.axis().scale(xScale).orient('bottom').tickValues(xTicks));
   }
 
   // Super quick tooltip using existing tooltip library
