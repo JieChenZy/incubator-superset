@@ -54,8 +54,9 @@ function computedProps(props) {
 
   const plotWidth = width - (padding.right + padding.left);
   const legendWidth = plotWidth;
-  const legendHeight = height * 0.10;
-  const plotHeight = height - (padding.top + padding.bottom + legendHeight);
+  const legendHeight = height * 0.08;
+  const xlabelHeight = height * 0.02;
+  const plotHeight = height - (padding.top + padding.bottom + legendHeight + xlabelHeight);
 
   const sortedData = sortData(data, 'color');
 
@@ -109,8 +110,8 @@ function computedProps(props) {
     colorValues,
     yFormat,
     displayXAxis,
+    xlabelHeight,
     legendWidth,
-    legendHeight,
   };
 }
 
@@ -168,6 +169,7 @@ function scatCatViz(slice, json) {
     shapeScale,
     shapeValues,
     colorValues,
+    xlabelHeight,
     legendWidth,
   } = computedProps({ fd, data, width, height });
 
@@ -188,7 +190,7 @@ function scatCatViz(slice, json) {
     .attr('class', 'y axis');
 
   const xAxis = g.append('g')
-      .attr('transform', `translate(${0},${plotHeight + (padding.top / 2)})`)
+      .attr('transform', `translate(${0},${plotHeight})`)
       .attr('class', 'x axis');
 
   const legend = g.append('g')
@@ -269,7 +271,7 @@ function scatCatViz(slice, json) {
   }
 
   // split the legend rendering in a separate function.
-  renderLegend(legend, { fd, shapeScale, shapeValues, colorValues, plotHeight, legendWidth });
+  renderLegend(legend, { fd, shapeScale, shapeValues, colorValues, plotHeight, xlabelHeight, legendWidth });
 }
 
 /**
@@ -329,12 +331,12 @@ function renderLegend(legend, props) {
  * @param {Object} props Properties used.
  */
 function fixUpLegend(legend, props) {
-  const { plotHeight, legendWidth } = props;
+  const { plotHeight, legendWidth, xlabelHeight } = props;
 
   const bboxes = [];
 
   legend
-    .attr('transform', `translate(${0}, ${plotHeight})`);
+    .attr('transform', `translate(${0}, ${plotHeight + xlabelHeight})`);
 
   // getBBox is one way to get the width/height of an
   // element in an SVG.
