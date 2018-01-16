@@ -199,7 +199,7 @@ function scatCatViz(slice, json) {
   // how you add an axis to a chart in d3.
   // api: https://github.com/d3/d3-3.x-api-reference/blob/master/SVG-Axes.md#axis
   yAxis
-    .call(d3.svg.axis().scale(yScale).orient('left'));
+    .call(d3.svg.axis().scale(yScale).orient('left').tickFormat(d3.format(fd.y_axis_format)));
 
   if (displayXAxis) {
     xAxis
