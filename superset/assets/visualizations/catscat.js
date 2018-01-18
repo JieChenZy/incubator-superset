@@ -221,13 +221,19 @@ function scatCatViz(slice, json) {
     xAxis
       .call(d3.svg.axis().scale(xScale).orient('bottom').tickValues(xTicks));
   }
-  // add y-axis label based on form data
+  // add labels to axis  based on form data
   const yLabel = svg.append('text')
     .attr('transform', 'rotate(-90)')
     .attr('x', 0 - (plotHeight / 2))
-    .attr('y', padding.left/5)
-    .style('text-anchor', 'end')
+    .attr('y', padding.left / 5)
+    .style('text-anchor', 'middle')
     .text(fd.y_axis_label);
+
+  const xLabel = svg.append('text')
+    .attr('x', plotWidth / 2)
+    .attr('y', padding.top + plotHeight + (xlabelHeight * 1.1))
+    .style('text-anchor', 'middle')
+    .text(fd.x_axis_label);
 
   // Super quick tooltip using existing tooltip library
   // api: https://github.com/Caged/d3-tip

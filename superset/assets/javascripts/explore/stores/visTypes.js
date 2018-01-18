@@ -802,6 +802,12 @@ export const visTypes = {
         ],
       },
       {
+        label: t('X Axis'),
+        controlSetRows: [
+          ['x_axis_label'],
+        ],
+      },
+      {
         label: t('Y Axis'),
         controlSetRows: [
           ['marker_lines'],
