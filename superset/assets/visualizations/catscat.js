@@ -60,15 +60,15 @@ function computedProps(props) {
   const { fd, data, width, height } = props;
   const padding = {
     top: 20,
-    left: 50,
+    left: 60,
     right: 20,
-    bottom: 50,
+    bottom: 60,
   };
 
   const plotWidth = width - (padding.right + padding.left);
   const legendWidth = plotWidth;
-  const legendHeight = height * 0.08;
-  const xlabelHeight = height * 0.02;
+  const legendHeight = height * 0.07;
+  const xlabelHeight = height * 0.03;
   const plotHeight = height - (padding.top + padding.bottom + legendHeight + xlabelHeight);
 
   const sortedData = sortData(data, 'color');
@@ -110,12 +110,8 @@ function computedProps(props) {
   // Calculate x-axis ticks
   //const xMax = d3.max(xScale.domain());
   //const xTicks = xScale.domain().filter(d => { if (xMax > 100) {return !(d % 100);} else { return !(d % 10); } });
-  console.log(xScale.domain());
   const interval = computeTickInterval(xScale.domain());
   const xTicks = xScale.domain().filter(d => {return !(d % interval);});
-
-  console.log(xTicks);
-
 
   return {
     padding,
@@ -225,6 +221,13 @@ function scatCatViz(slice, json) {
     xAxis
       .call(d3.svg.axis().scale(xScale).orient('bottom').tickValues(xTicks));
   }
+  // add y-axis label based on form data
+  const yLabel = svg.append('text')
+    .attr('transform', 'rotate(-90)')
+    .attr('x', 0 - (plotHeight / 2))
+    .attr('y', padding.left/5)
+    .style('text-anchor', 'end')
+    .text(fd.y_axis_label);
 
   // Super quick tooltip using existing tooltip library
   // api: https://github.com/Caged/d3-tip
