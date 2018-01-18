@@ -36,6 +36,19 @@ function sortData(data, sortBy) {
 }
 
 /**
+ *
+ *  */
+function computeTickInterval(data) {
+  const maxValue = d3.max(data);
+  const nDigits = maxValue.toString().length;
+  let interval = 1;
+  for (let i = 0; i < nDigits - 1; i++) {
+    interval = 10 * interval;
+  }
+  return interval/2;
+}
+
+/**
  * computedProps
  * returns derived properties and functions based on input.
  * Used to conceptually distinguish the 'setting up' of
@@ -95,7 +108,14 @@ function computedProps(props) {
   const displayXAxis = true;
 
   // Calculate x-axis ticks
-  const xTicks = xScale.domain().filter(d => {return !(d % 10); });
+  //const xMax = d3.max(xScale.domain());
+  //const xTicks = xScale.domain().filter(d => { if (xMax > 100) {return !(d % 100);} else { return !(d % 10); } });
+  console.log(xScale.domain());
+  const interval = computeTickInterval(xScale.domain());
+  const xTicks = xScale.domain().filter(d => {return !(d % interval);});
+
+  console.log(xTicks);
+
 
   return {
     padding,
