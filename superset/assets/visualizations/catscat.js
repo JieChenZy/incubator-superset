@@ -49,6 +49,95 @@ function computeTickInterval(data) {
 }
 
 /**
+ * Computes and Plots 3 lines for each data group:
+ * average, average + 3 standard deviation, average + 3 standard deviation
+ * @param {object} sortedData
+ * @param {object} g: the main object where our chart will be drawn
+ * @param {function} xScale: xScale for the chart
+ * @param {function} yScales: yScale for the chart
+ * @param {number} plotHeight: the height of the draw area
+ * */
+function addControlLines(sortedData, g, xScale, yScale, plotHeight) {
+  const dataValueField = sortedData.map(item => item.values[0]);
+
+  let controlLines = d3.nest()
+    .key(d => d.color)
+    .rollup(v => ({
+      len: v.length,
+      avg: d3.mean(v, d => d.y),
+      std: d3.deviation(v, d => d.y),
+    }),
+    )
+    .entries(dataValueField);
+
+  let position1 = 0;
+  let position2 = 0;
+
+  controlLines = controlLines.map(
+    (item) => {
+      position2 += item.values.len;
+      position1 = position2 - item.values.len;
+      return {
+        ...item,
+        values: {
+          ...item.values,
+          x1: position1,
+          x2: position2,
+          upperLimit: item.values.avg + 3 * item.values.std,
+          lowerLimit: item.values.avg - 3 * item.values.std,
+        },
+      };
+    },
+  );
+
+  // average of the group
+  g.selectAll('.avg')
+    .data(controlLines)
+    .enter()
+    .append('line')
+    .classed('ave', true)
+    .attr('stroke', 'gray')
+    .attr('stroke-width', 1.5)
+    .style('stroke-dasharray', ('3, 3'))
+    .attr('x1', d => xScale(d.values.x1))
+    .attr('x2', d => xScale(d.values.x2 - 1))
+    .attr('y1', d => yScale(d.values.avg))
+    .attr('y2', d => yScale(d.values.avg));
+
+  // average + 3 standard deviation of the group
+  g.selectAll('.upperLimit')
+    .data(controlLines)
+    .enter()
+    .append('line')
+    .classed('upperLimit', true)
+    .attr('stroke', 'red')
+    .attr('stroke-width', 1.5)
+    .style('stroke-dasharray', ('3, 3'))
+    .attr('x1', d => xScale(d.values.x1))
+    .attr('x2', d => xScale(d.values.x2 - 1))
+    .attr('y1', d => yScale(d.values.upperLimit))
+    .attr('y2', d => yScale(d.values.upperLimit));
+
+  // average - 3 standard deviation of the group
+  const controlLinesFiltered = controlLines.filter(
+    item => yScale(item.values.lowerLimit) < plotHeight,
+  );
+
+  g.selectAll('.lowerLimit')
+    .data(controlLinesFiltered)
+    .enter()
+    .append('line')
+    .classed('lowerLimit', true)
+    .attr('stroke', 'red')
+    .attr('stroke-width', 1.5)
+    .style('stroke-dasharray', ('3, 3'))
+    .attr('x1', d => xScale(d.values.x1))
+    .attr('x2', d => xScale(d.values.x2 - 1))
+    .attr('y1', d => yScale(d.values.lowerLimit))
+    .attr('y2', d => yScale(d.values.lowerLimit));
+}
+
+/**
  * computedProps
  * returns derived properties and functions based on input.
  * Used to conceptually distinguish the 'setting up' of
@@ -108,8 +197,8 @@ function computedProps(props) {
   const displayXAxis = true;
 
   // Calculate x-axis ticks
-  //const xMax = d3.max(xScale.domain());
-  //const xTicks = xScale.domain().filter(d => { if (xMax > 100) {return !(d % 100);} else { return !(d % 10); } });
+  // const xMax = d3.max(xScale.domain());
+  // const xTicks = xScale.domain().filter(d => { if (xMax > 100) {return !(d % 100);} else { return !(d % 10); } });
   const interval = computeTickInterval(xScale.domain());
   const xTicks = xScale.domain().filter(d => {return !(d % interval);});
 
@@ -283,6 +372,12 @@ function scatCatViz(slice, json) {
       tip.hide(d);
     });
   // d3 symbols: https://github.com/d3/d3-3.x-api-reference/blob/master/SVG-Shapes.md#symbol
+
+  // show control lines if selected
+  if (fd.show_control_chart) {
+    addControlLines(sortedData, g, xScale, yScale, plotHeight);
+  }
+
 
   // add lines if present
   if (yLines) {

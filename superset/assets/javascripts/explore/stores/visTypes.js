@@ -810,7 +810,7 @@ export const visTypes = {
       {
         label: t('Y Axis'),
         controlSetRows: [
-          ['marker_lines'],
+          ['marker_lines', 'show_control_chart'],
           ['y_axis_label', 'bottom_margin'],
           ['y', 'y_axis_format'],
           ['y_log_scale', 'y_axis_showminmax'],

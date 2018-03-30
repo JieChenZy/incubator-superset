@@ -917,6 +917,14 @@ export const controls = {
     }),
   },
 
+  show_control_chart: {
+    type: 'CheckboxControl',
+    label: t('Show Control Chart'),
+    default: false,
+    renderTrigger: true,
+    description: t('Control chart shows mean and 3 standard deviation of data group')
+  },
+
   url: {
     type: 'TextControl',
     label: t('URL'),
